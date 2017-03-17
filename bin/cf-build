@@ -1,1 +1,74 @@
-build
+#!/usr/bin/env node
+
+var program = require('commander')
+var path = require('path');
+var co = require('co');
+var chalk = require('chalk');
+var logger = require('../lib/logger');
+
+/**
+ * Usage.
+ */
+program
+  .usage('-m <prod>')
+  .option('-m, --mode <mode>", "编译项目')
+  .description(chalk.gray('编译项目，支持测试版本<test>, 生产版本<prod>'))
+
+/**
+ * Help.
+ */
+program.on('--help', function () {
+  console.log('  Examples:')
+  console.log()
+  console.log('    $ cf build -m test')
+  console.log('    $ cf build -m prod')
+  console.log('    $ cf build -mode test')
+  console.log('    $ cf build -mode prod')
+  console.log()
+})
+
+
+program.parse(process.argv)
+
+/**
+ * 如果没有提供任何参数，显示帮助信息
+ */
+if (program.args.length < 2) {
+  return program.help();
+}
+
+/** 执行参数定义 */
+
+
+
+/**
+ * 开始执行
+ */
+run();
+
+/**
+ * @description 开始执行
+ */
+function run () {
+  co(function*(){
+    // 开始
+    logger.log(`开始创建项目，项目名称：${params.projectName}`);
+    
+    // 完成
+    logger.success(`创建项目完成，项目名称：${params.projectName}`); 
+  }).catch(
+    e => {
+      console.log(e);
+      logger.error('创建失败:' + e);
+    }
+  )
+}
+
+
+/**
+ * 监听退出
+ */
+console.log()
+process.on('exit', function () {
+  console.log()
+})

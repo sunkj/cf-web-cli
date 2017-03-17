@@ -3,6 +3,7 @@
 var program = require('commander')
 var path = require('path');
 var co = require('co');
+var chalk = require('chalk');
 var logger = require('../lib/logger');
 var downloadAction = require('../lib/download-action');
 var generateAction = require('../lib/generate-action');
@@ -13,6 +14,7 @@ var installAction = require('../lib/install-action');
  */
 program
   .usage('<template-name> [project-name]')
+  .description(chalk.gray('根据github模板，创建一个新项目，支持项目模板 ng1, ng2, react, vue'))
 
 /**
  * Help.
@@ -20,7 +22,6 @@ program
 program.on('--help', function () {
   console.log('  Examples:')
   console.log()
-  console.log(chalk.gray('    # create a new project straight from a github template'))
   console.log('    $ cf new ng2   project-name')
   console.log('    $ cf new vue   project-name')
   console.log('    $ cf new react project-name')
@@ -55,27 +56,27 @@ run();
  */
 function run () {
   co(function*(){
-    logger.log(`开始，项目名称：${params.projectName}`);
-    // 下载
-    let downloadPath = yield downloadAction.exec(params.template, params.tempPath);
-    // 生成
-    let projectPath = generateAction.exec(params.projectName, downloadPath);
-    if(!projectPath){
-     logger.error('生成项目失败');
-     return false;  
-    }
+    // 开始
+    logger.log(`开始创建项目，项目名称：${params.projectName}`);
+    // 下载文件路径
+    let downloadPath = params.tempPath;
+    if(!path.isAbsolute(downloadPath)){
+      downloadPath = path.join(process.cwd(), params.tempPath);
+    } 
+    // 开始下载
+    yield downloadAction.exec(params.template, downloadPath);
+    // 生成项目路径
+    var projectPath = path.join(process.cwd(), params.projectName);
+    // 生成项目
+    generateAction.exec(params.projectName, downloadPath, projectPath);
     // 运行 npm install
-    let installResult = yield installAction.exec(projectPath);  
-    if(installResult){
-      logger.success(`结束，项目名称：${params.projectName}`);
-      return true;
-    }else{
-      logger.success(`结束，项目名称：${params.projectName}，请手动尝试运行 npm install`);
-      return false;
-    }    
+    yield installAction.exec(projectPath);  
+    // 完成
+    logger.success(`创建项目完成，项目名称：${params.projectName}`); 
   }).catch(
-    e => {console.log(e);
-      logger.error('安装失败！！！');
+    e => {
+      console.log(e);
+      logger.error('创建失败:' + e);
     }
   )
 }
