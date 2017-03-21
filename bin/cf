@@ -5,4 +5,8 @@ require('commander')
   .usage('<command> [options]')
   .command('new', '创建项目')
   .command('build', '编译项目')
+  .command('generator', '生成模板')
   .parse(process.argv)
+
+
+  

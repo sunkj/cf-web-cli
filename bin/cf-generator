@@ -1,1 +1,95 @@
-cf-generator
+#!/usr/bin/env node
+
+var program = require('commander')
+var path = require('path');
+var co = require('co');
+var chalk = require('chalk');
+var ora = require('ora');
+var logger = require('../lib/logger');
+var child_process = require('child_process');
+var util = require('../lib/util');
+var newPipeAction = require('../lib/new-pipe-action');
+var newRouteAction = require('../lib/new-route-action');
+var newServiceAction = require('../lib/new-service-action');
+var newComponentAction = require('../lib/new-component-action');
+var newModuleAction = require('../lib/new-module-action');
+var newDireactiveAction = require('../lib/new-direactive-action');
+var fs = require('fs');
+
+/**
+ * Usage.
+ */
+program
+  .option('-c, --component <component>', '生成组件')
+  .option('-m, --module <module>', '生成模块')
+  .option('-s, --service <service>', '生成服务')
+  .option('-d, --directive <directive>', '生成指令')
+  .option('-p, --pipe <pipe>', '生成管道')
+  .description(chalk.gray('生成模板命令，支持创建组件、模块、服务、指令、管道等'))
+
+/**
+ * Help.
+ */
+program.on('--help', function () {
+  console.log('  Examples:')
+  console.log()
+  console.log('    $ cf generator -c your-component')
+  console.log('    $ cf generator -m your-module')
+  console.log('    $ cf generator -s your-service')
+  console.log('    $ cf generator -d your-direactive')
+  console.log('    $ cf generator -p your-pipe')  
+  console.log()
+})
+
+
+program.parse(process.argv)
+
+/**
+ * 如果没有提供任何参数，显示帮助信息
+ */
+if (!program.component
+	&& !program.module
+	&& !program.service
+	&& !program.directive
+	&& !program.pipe) {
+  return program.help();
+}
+
+
+/**
+ * 开始执行
+ */
+run();
+
+/**
+ * @description 开始执行
+ */
+function run () {
+  co(function*(){
+    // 开始
+    logger.log('开始构建项目');
+    if(program.pipe){
+    	const output = path.join(process.cwd(), 'tmp');
+
+
+    	
+    	newPipeAction.exec(program.pipe, program.pipe, output);
+    	newRouteAction.exec(program.pipe, output);
+    	
+    }
+  }).catch(
+    e => {
+      console.log(e);
+      logger.error('构建失败:' + e);
+    }
+  )
+}
+
+
+/**
+ * 监听退出
+ */
+console.log()
+process.on('exit', function () {
+  console.log()
+})

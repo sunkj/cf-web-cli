@@ -4,7 +4,9 @@ var program = require('commander')
 var path = require('path');
 var co = require('co');
 var chalk = require('chalk');
+var ora = require('ora');
 var logger = require('../lib/logger');
+var child_process = require('child_process');
 
 /**
  * Usage.
@@ -12,6 +14,7 @@ var logger = require('../lib/logger');
 program
   .usage('-m <prod>')
   .option('-m, --mode <mode>", "编译项目')
+  .option('-c, --cwd [cwd]", "运行目录')
   .description(chalk.gray('编译项目，支持测试版本<test>, 生产版本<prod>'))
 
 /**
@@ -33,12 +36,9 @@ program.parse(process.argv)
 /**
  * 如果没有提供任何参数，显示帮助信息
  */
-if (program.args.length < 2) {
+if (!program.mode) {
   return program.help();
 }
-
-/** 执行参数定义 */
-
 
 
 /**
@@ -52,14 +52,46 @@ run();
 function run () {
   co(function*(){
     // 开始
-    logger.log(`开始创建项目，项目名称：${params.projectName}`);
-    
-    // 完成
-    logger.success(`创建项目完成，项目名称：${params.projectName}`); 
+    logger.log('开始构建项目');
+    var command = '';
+    switch(program.mode.toUpperCase()){
+      case 'TEST':
+        command = 'npm run build:test';
+        break;
+      case 'PROD':
+        command = 'npm run build:prod';
+        break;
+      default:
+        program.help();
+        return;
+    }
+    var cwd = process.cwd();
+    // 指定相对目录路径
+    if(program.cwd &&
+      !path.isAbsolute(program.cwd)){
+      cwd = path.join(process.cwd(), program.cwd);
+    }
+    // 指定了绝对路径
+    if(program.cwd &&
+      path.isAbsolute(program.cwd)){
+      cwd = program.cwd;
+    }
+    // 开始运行命令
+    var spinner = ora(logger.log(command));
+    spinner.start();
+    child_process.exec(command, {"cwd": cwd}, function(err){
+      spinner.stop();
+      if(err){
+        console.log(err);
+        logger.error('构建失败！');
+      }else{
+        logger.success('构建成功！');
+      }
+    });
   }).catch(
     e => {
       console.log(e);
-      logger.error('创建失败:' + e);
+      logger.error('构建失败:' + e);
     }
   )
 }
