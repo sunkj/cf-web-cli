@@ -69,7 +69,7 @@ run();
  */
 function run () {
   try{
-    const output = path.join(process.cwd(), 'tmp');
+    const output = path.join(process.cwd());
     // 创建Pipe
     program.pipe && createPipe(program.pipe, program.pipe, output);
     // 创建module
