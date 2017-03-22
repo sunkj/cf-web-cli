@@ -1,6 +1,6 @@
 {
-  "name": "cf_web_cli",
-  "version": "1.0.4",
+  "name": "cf-web-cli",
+  "version": "1.0.0",
   "description": "cf web cli for angular 2",
   "main": "./lib/index.js",
   "bin": {
