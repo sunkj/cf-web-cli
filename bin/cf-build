@@ -100,7 +100,6 @@ function run () {
 /**
  * 监听退出
  */
-console.log()
 process.on('exit', function () {
   console.log()
 })

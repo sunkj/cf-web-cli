@@ -8,24 +8,25 @@ var ora = require('ora');
 var logger = require('../lib/logger');
 var child_process = require('child_process');
 var util = require('../lib/util');
-var newPipeAction = require('../lib/new-pipe-action');
-var newRouteAction = require('../lib/new-route-action');
-var newServiceAction = require('../lib/new-service-action');
-var newComponentAction = require('../lib/new-component-action');
-var newModuleAction = require('../lib/new-module-action');
-var newDireactiveAction = require('../lib/new-direactive-action');
+var createPipeAction = require('../lib/create-pipe-action');
+var createRouteAction = require('../lib/create-route-action');
+var createServiceAction = require('../lib/create-service-action');
+var createComponentAction = require('../lib/create-component-action');
+var createModuleAction = require('../lib/create-module-action');
+var createDireactiveAction = require('../lib/create-direactive-action');
 var fs = require('fs');
 
 /**
  * Usage.
  */
 program
-  .option('-c, --component <component>', '生成组件')
-  .option('-m, --module <module>', '生成模块')
-  .option('-s, --service <service>', '生成服务')
-  .option('-d, --directive <directive>', '生成指令')
-  .option('-p, --pipe <pipe>', '生成管道')
-  .description(chalk.gray('生成模板命令，支持创建组件、模块、服务、指令、管道等'))
+  .option('-c, --component <component>', '创建组件')
+  .option('-m, --module <module>', '创建模块')
+  .option('-s, --service <service>', '创建服务')
+  .option('-d, --directive <directive>', '创建指令')
+  .option('-r, --route <route>', '创建路由')
+  .option('-p, --pipe <pipe>', '创建管道')
+  .description(chalk.gray('创建模板命令，支持创建组件、模块、服务、指令、管道、路由等'))
 
 /**
  * Help.
@@ -35,6 +36,7 @@ program.on('--help', function () {
   console.log()
   console.log('    $ cf generator -c your-component')
   console.log('    $ cf generator -m your-module')
+  console.log('    $ cf generator -r your-route')
   console.log('    $ cf generator -s your-service')
   console.log('    $ cf generator -d your-direactive')
   console.log('    $ cf generator -p your-pipe')  
@@ -51,7 +53,8 @@ if (!program.component
 	&& !program.module
 	&& !program.service
 	&& !program.directive
-	&& !program.pipe) {
+	&& !program.pipe
+  && !program.route) {
   return program.help();
 }
 
@@ -65,31 +68,99 @@ run();
  * @description 开始执行
  */
 function run () {
-  co(function*(){
-    // 开始
-    logger.log('开始构建项目');
-    if(program.pipe){
-    	const output = path.join(process.cwd(), 'tmp');
-
-
-    	
-    	newPipeAction.exec(program.pipe, program.pipe, output);
-    	newRouteAction.exec(program.pipe, output);
-    	
-    }
-  }).catch(
-    e => {
+  try{
+    const output = path.join(process.cwd(), 'tmp');
+    // 创建Pipe
+    program.pipe && createPipe(program.pipe, program.pipe, output);
+    // 创建module
+    program.module && createModule(program.module, output);
+    // 创建component
+    program.component && createComponent(program.component, output);
+    // 创建service
+    program.service && createService(program.service, output);
+    // 创建directive
+    program.directive && createDireactive(program.directive, program.directive, output);
+    // 创建route
+    program.route && createRoute(program.route, output);
+  }catch(e){
       console.log(e);
-      logger.error('构建失败:' + e);
-    }
-  )
+      logger.error('创建模板失败:' + e);
+  }
 }
 
+/**
+ * @description 创建Pipe
+ * @param name 名称
+ * @param output 输出路径
+ */
+function createPipe(name, selector, output){
+  createPipeAction.exec(name, selector, output);   
+}
+
+/**
+ * @description 创建Direactive
+ * @param name 名称
+ * @param output 输出路径
+ */
+function createDireactive(name, selector, output){
+  createDireactiveAction.exec(name, selector, output);
+}
+
+/**
+ * @description 创建Component
+ * @param name 名称
+ * @param output 输出路径
+ */
+function createComponent(name, output){
+  checkFolder(output);
+  const componentPath = path.join(output, name.toLowerCase());
+  checkFolder(componentPath);
+  createComponentAction.exec(name, componentPath);      
+}
+
+/**
+ * @description 创建Module
+ * @param name 名称
+ * @param output 输出路径
+ */
+function createModule(name, output){
+  checkFolder(output);
+  const modulePath = path.join(output, name.toLowerCase());
+  checkFolder(modulePath);
+  createModuleAction.exec(name, modulePath);    
+}
+
+/**
+ * @description 创建Service
+ * @param name 名称
+ * @param output 输出路径
+ */
+function createService(name, output){
+  createServiceAction.exec(name, output);    
+}
+
+/**
+ * @description 创建Route
+ * @param name 名称
+ * @param output 输出路径
+ */
+function createRoute(name, output){
+  createRouteAction.exec(name, output);   
+}
+
+/**
+ * @description 检查文件夹是否存在，不存在就创建一个
+ * @param folder 文件夹路径
+ */
+function checkFolder(folder){
+  if(!fs.existsSync(folder)){
+    fs.mkdirSync(folder);
+  }
+}
 
 /**
  * 监听退出
  */
-console.log()
 process.on('exit', function () {
   console.log()
 })
