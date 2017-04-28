@@ -6,7 +6,7 @@ var co = require('co');
 var chalk = require('chalk');
 var ora = require('ora');
 var logger = require('../lib/logger');
-var child_process = require('child_process');
+const spawn = require('child_process').spawn;
 
 /**
  * Usage.
@@ -22,23 +22,15 @@ program
 program.on('--help', function () {
   console.log('  Examples:')
   console.log()
-  console.log('    $ cf run -m dev')
-  console.log('    $ cf run -m mock')
-  console.log('    $ cf run -mode dev')
-  console.log('    $ cf run -mode mock')
+  console.log('    $ cf run dev OR cf run -m dev')
+  console.log('    $ cf run OR cf run mock OR cf run -m mock')
+  console.log('    $ cf run -m dev OR cf run -mode dev')
+  console.log('    $ cf run -m mock OR cf run -mode mock')
   console.log()
 })
 
 
 program.parse(process.argv)
-
-/**
- * 如果没有提供任何参数，显示帮助信息
- */
-if (!program.mode) {
-  return program.help();
-}
-
 
 /**
  * 开始执行
@@ -49,28 +41,33 @@ run();
  * @description 开始执行
  */
 function run () {
-  var command = '';
-  var mode = program.mode ? program.mode : program.args[0];
+  var commandArgs = ['run'];
+  var mode = program.args[0] ? program.args[0] : program.mode;
   if(mode && mode.toUpperCase() == 'DEV'){
-    command = 'npm start';
+    commandArgs = [];
+    commandArgs.push('start');
   }else if(mode && mode.toUpperCase() == 'MOCK'){
-    command = 'npm run mock';
+    commandArgs.push('mock');
   }else{
-    command = 'npm run mock';
+    commandArgs.push('mock');
   }
   var cwd = process.cwd();
   // 开始运行命令
-  logger.log('运行模式: ' + mode || 'mock');
-  var spinner = ora(logger.log(command));
+  var spinner = ora(logger.log('开始运行命令...'));
   spinner.start();
-  child_process.exec(command, {"cwd": cwd}, function(err){
+  const ls = spawn((process.platform === "win32" ||  process.platform === "win64") ? "npm.cmd" : "npm", commandArgs, {"cwd": cwd});
+  ls.stdout.on('data', (data) => {
+      console.log(`${data}`);
+  });
+  ls.stderr.on('data', (data) => {
+      console.log(`${data}`);
+  });
+  ls.on('error', (err) => {
     spinner.stop();
-    if(err){
-      console.log(err);
-      logger.error('项目启动失败！');
-    }else{
-      logger.success('项目启动成功！');
-    }
+    console.log('项目启动失败,', err);
+  });
+  ls.on('close', (code) => {
+      spinner.stop();
   });
 }
 

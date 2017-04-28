@@ -6,13 +6,13 @@ var co = require('co');
 var chalk = require('chalk');
 var ora = require('ora');
 var logger = require('../lib/logger');
-var child_process = require('child_process');
+const spawn = require('child_process').spawn;
 
 /**
  * Usage.
  */
 program
-  .usage('-m <prod>')
+  .usage('-m [prod]')
   .option('-m, --mode [mode]', '编译项目')
   .option('-c, --cwd [cwd]', '运行目录')
   .description(chalk.gray('编译项目，支持测试版本<test>, 生产版本<prod>, 验证编译结果<verify>'))
@@ -23,9 +23,9 @@ program
 program.on('--help', function () {
   console.log('  Examples:')
   console.log()
-  console.log('    $ cf build -m test or cf build test')
-  console.log('    $ cf build -m prod or cf build prod')
-  console.log('    $ cf build -m verify or cf build verify')
+  console.log('    $ cf build -m test OR cf build test')
+  console.log('    $ cf build -m prod OR cf build prod')
+  console.log('    $ cf build -m verify OR cf build verify')
   console.log('    $ cf build -mode test')
   console.log('    $ cf build -mode prod')
   console.log('    $ cf build -mode verify')
@@ -38,7 +38,7 @@ program.parse(process.argv)
 /**
  * 如果没有提供任何参数，显示帮助信息
  */
-if (!program.mode) {
+if (!program.mode && !program.args[0]) {
   return program.help();
 }
 
@@ -53,12 +53,14 @@ run();
  */
 function run () {
   try{
-    var command = '';
-    var mode = program.mode ? program.mode : program.args[0];
+    var commandArgs = ['run'];
+    var mode = program.args[0] ? program.args[0] : program.mode;
     if(mode && mode.toUpperCase() == 'TEST') {
-      command = 'npm run build:test'
+      commandArgs.push('build:test');
     }else if(mode && mode.toUpperCase() == 'PROD') {
-      command = 'npm run build:prod'
+      commandArgs.push('build:prod');
+    }else if(mode && mode.toUpperCase() == 'VERIFY') {
+      commandArgs.push('build:server');
     }else{
       program.help();
       return;
@@ -74,16 +76,21 @@ function run () {
     }
     // 开始运行命令
     logger.log('开始构建项目, 模式：' + mode);
-    var spinner = ora(logger.log(command));
+    var spinner = ora(logger.log('开始运行命令...'));
     spinner.start();
-    child_process.exec(command, {"cwd": cwd}, function(err){
+    const ls = spawn((process.platform === "win32" ||  process.platform === "win64") ? "npm.cmd" : "npm", commandArgs, {"cwd": cwd});
+    ls.stdout.on('data', (data) => {
+        console.log(`${data}`);
+    });
+    ls.stderr.on('data', (data) => {
+        console.log(`${data}`);
+    });
+    ls.on('error', (err) => {
       spinner.stop();
-      if(err){
-        console.log(err);
-        logger.error('构建失败！');
-      }else{
-        logger.success('构建成功！');
-      }
+      console.log('启动子进程失败,', err);
+    });
+    ls.on('close', (code) => {
+      spinner.stop();
     });
   }catch (e){
     console.log(e);

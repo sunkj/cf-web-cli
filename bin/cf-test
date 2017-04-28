@@ -6,7 +6,7 @@ var co = require('co');
 var chalk = require('chalk');
 var ora = require('ora');
 var logger = require('../lib/logger');
-var child_process = require('child_process');
+const spawn = require('child_process').spawn;
 
 /**
  * Usage.
@@ -29,14 +29,6 @@ program.on('--help', function () {
 program.parse(process.argv)
 
 /**
- * 如果没有提供任何参数，显示帮助信息
- */
-if (!program.mode) {
-  return program.help();
-}
-
-
-/**
  * 开始执行
  */
 run();
@@ -47,19 +39,24 @@ run();
 function run () {
   // 开始
   logger.log('开始启动单元测试');
-  var command = 'npm run test';
+  var commandArgs = ['run','test'];
   var cwd = process.cwd();
   // 开始运行命令
-  var spinner = ora(logger.log(command));
+  var spinner = ora(logger.log('开始运行命令...'));
   spinner.start();
-  child_process.exec(command, {"cwd": cwd}, function(err){
+  const ls = spawn((process.platform === "win32" ||  process.platform === "win64") ? "npm.cmd" : "npm", commandArgs, {"cwd": cwd});
+  ls.stdout.on('data', (data) => {
+    console.log(`${data}`);
+  });
+  ls.stderr.on('data', (data) => {
+    console.log(`${data}`);
+  });
+  ls.on('error', (err) => {
     spinner.stop();
-    if(err){
-      console.log(err);
-      logger.error('启动单元测试失败！');
-    }else{
-      logger.success('启动单元测试成功！');
-    }
+    console.log('启动子进程失败,', err);
+  });
+  ls.on('close', (code) => {
+      spinner.stop();
   });
 }
 
