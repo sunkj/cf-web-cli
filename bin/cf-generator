@@ -120,7 +120,7 @@ function createDireactive(name, selector){
  */
 function createComponent(name){
   let output = program.args[0]
-      ? path.join(process.cwd(), program.args[0]) : path.join(process.cwd(), 'src', 'app', name.toLowerCase());
+      ? path.join(process.cwd(), program.args[0], name.toLowerCase()) : path.join(process.cwd(), 'src', 'app', name.toLowerCase());
   checkExistOrMakeFolder(output);
   createComponentAction.exec(name, output);
 }
@@ -132,7 +132,7 @@ function createComponent(name){
  */
 function createModule(name){
   let output = program.args[0]
-      ? path.join(process.cwd(), program.args[0]) : path.join(process.cwd(), 'src', 'app', name.toLowerCase());
+      ? path.join(process.cwd(), program.args[0], name.toLowerCase()) : path.join(process.cwd(), 'src', 'app', name.toLowerCase());
   checkExistOrMakeFolder(output);
   createModuleAction.exec(name, output);
 }
