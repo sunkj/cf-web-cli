@@ -34,10 +34,10 @@ program
 program.on('--help', function () {
   console.log('  Examples:')
   console.log()
-  console.log('    $ cf generator -c your-component')
-  console.log('    $ cf generator -m your-module')
+  console.log('    $ cf generator -c your-component or cf generator -c your-component output')
+  console.log('    $ cf generator -m your-module or cf generator -m your-module output')
   console.log('    $ cf generator -r your-route')
-  console.log('    $ cf generator -s your-service')
+  console.log('    $ cf generator -s your-service or cf generator -s your-service output')
   console.log('    $ cf generator -d your-direactive')
   console.log('    $ cf generator -p your-pipe')  
   console.log()
@@ -69,19 +69,18 @@ run();
  */
 function run () {
   try{
-    const output = path.join(process.cwd());
     // 创建Pipe
-    program.pipe && createPipe(program.pipe, program.pipe, output);
+    program.pipe && createPipe(program.pipe, program.pipe);
     // 创建module
-    program.module && createModule(program.module, output);
+    program.module && createModule(program.module);
     // 创建component
-    program.component && createComponent(program.component, output);
+    program.component && createComponent(program.component);
     // 创建service
-    program.service && createService(program.service, output);
+    program.service && createService(program.service);
     // 创建directive
-    program.directive && createDireactive(program.directive, program.directive, output);
+    program.directive && createDireactive(program.directive, program.directive);
     // 创建route
-    program.route && createRoute(program.route, output);
+    program.route && createRoute(program.route);
   }catch(e){
       console.log(e);
       logger.error('创建模板失败:' + e);
@@ -93,8 +92,12 @@ function run () {
  * @param name 名称
  * @param output 输出路径
  */
-function createPipe(name, selector, output){
-  createPipeAction.exec(name, selector, output);   
+function createPipe(name, selector){
+  let defaultPath = path.join(process.cwd(), 'src', 'app', 'shared', 'pipe');
+  if(!fs.existsSync(defaultPath)){
+    defaultPath = path.join(process.cwd());
+  }
+  createPipeAction.exec(name, selector, defaultPath);
 }
 
 /**
@@ -102,8 +105,12 @@ function createPipe(name, selector, output){
  * @param name 名称
  * @param output 输出路径
  */
-function createDireactive(name, selector, output){
-  createDireactiveAction.exec(name, selector, output);
+function createDireactive(name, selector){
+  let defaultPath = path.join(process.cwd(), 'src', 'app', 'shared', 'directive');
+  if(!fs.existsSync(defaultPath)){
+    defaultPath = path.join(process.cwd());
+  }
+  createDireactiveAction.exec(name, selector, defaultPath);
 }
 
 /**
@@ -111,11 +118,11 @@ function createDireactive(name, selector, output){
  * @param name 名称
  * @param output 输出路径
  */
-function createComponent(name, output){
-  checkFolder(output);
-  const componentPath = path.join(output, name.toLowerCase());
-  checkFolder(componentPath);
-  createComponentAction.exec(name, componentPath);      
+function createComponent(name){
+  let output = program.args[0]
+      ? path.join(process.cwd(), program.args[0]) : path.join(process.cwd(), 'src', 'app', name.toLowerCase());
+  checkExistOrMakeFolder(output);
+  createComponentAction.exec(name, output);
 }
 
 /**
@@ -123,11 +130,11 @@ function createComponent(name, output){
  * @param name 名称
  * @param output 输出路径
  */
-function createModule(name, output){
-  checkFolder(output);
-  const modulePath = path.join(output, name.toLowerCase());
-  checkFolder(modulePath);
-  createModuleAction.exec(name, modulePath);    
+function createModule(name){
+  let output = program.args[0]
+      ? path.join(process.cwd(), program.args[0]) : path.join(process.cwd(), 'src', 'app', name.toLowerCase());
+  checkExistOrMakeFolder(output);
+  createModuleAction.exec(name, output);
 }
 
 /**
@@ -135,8 +142,11 @@ function createModule(name, output){
  * @param name 名称
  * @param output 输出路径
  */
-function createService(name, output){
-  createServiceAction.exec(name, output);    
+function createService(name){
+  let output = program.args[0]
+      ? path.join(process.cwd(), program.args[0]) : path.join(process.cwd(), 'src', 'app', 'shared', 'service');
+  checkExistOrMakeFolder(output);
+  createServiceAction.exec(name, output);
 }
 
 /**
@@ -144,15 +154,17 @@ function createService(name, output){
  * @param name 名称
  * @param output 输出路径
  */
-function createRoute(name, output){
-  createRouteAction.exec(name, output);   
+function createRoute(name){
+  let output = program.args[0]
+      ? path.join(process.cwd(), program.args[0]) : path.join(process.cwd());
+  createRouteAction.exec(name, output);
 }
 
 /**
  * @description 检查文件夹是否存在，不存在就创建一个
  * @param folder 文件夹路径
  */
-function checkFolder(folder){
+function checkExistOrMakeFolder(folder){
   if(!fs.existsSync(folder)){
     fs.mkdirSync(folder);
   }

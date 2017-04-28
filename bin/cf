@@ -6,6 +6,8 @@ require('commander')
   .command('new', '创建项目')
   .command('build', '编译项目')
   .command('generator', '创建模板')
+  .command('run', '运行项目')
+  .command('test', '运行单元测试')
   .parse(process.argv)
 
 

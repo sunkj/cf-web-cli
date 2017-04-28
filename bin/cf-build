@@ -13,9 +13,9 @@ var child_process = require('child_process');
  */
 program
   .usage('-m <prod>')
-  .option('-m, --mode <mode>", "编译项目')
-  .option('-c, --cwd [cwd]", "运行目录')
-  .description(chalk.gray('编译项目，支持测试版本<test>, 生产版本<prod>'))
+  .option('-m, --mode [mode]', '编译项目')
+  .option('-c, --cwd [cwd]', '运行目录')
+  .description(chalk.gray('编译项目，支持测试版本<test>, 生产版本<prod>, 验证编译结果<verify>'))
 
 /**
  * Help.
@@ -23,10 +23,12 @@ program
 program.on('--help', function () {
   console.log('  Examples:')
   console.log()
-  console.log('    $ cf build -m test')
-  console.log('    $ cf build -m prod')
+  console.log('    $ cf build -m test or cf build test')
+  console.log('    $ cf build -m prod or cf build prod')
+  console.log('    $ cf build -m verify or cf build verify')
   console.log('    $ cf build -mode test')
   console.log('    $ cf build -mode prod')
+  console.log('    $ cf build -mode verify')
   console.log()
 })
 
@@ -50,33 +52,28 @@ run();
  * @description 开始执行
  */
 function run () {
-  co(function*(){
-    // 开始
-    logger.log('开始构建项目');
+  try{
     var command = '';
-    switch(program.mode.toUpperCase()){
-      case 'TEST':
-        command = 'npm run build:test';
-        break;
-      case 'PROD':
-        command = 'npm run build:prod';
-        break;
-      default:
-        program.help();
-        return;
+    var mode = program.mode ? program.mode : program.args[0];
+    if(mode && mode.toUpperCase() == 'TEST') {
+      command = 'npm run build:test'
+    }else if(mode && mode.toUpperCase() == 'PROD') {
+      command = 'npm run build:prod'
+    }else{
+      program.help();
+      return;
     }
     var cwd = process.cwd();
     // 指定相对目录路径
-    if(program.cwd &&
-      !path.isAbsolute(program.cwd)){
+    if(program.cwd && !path.isAbsolute(program.cwd)){
       cwd = path.join(process.cwd(), program.cwd);
     }
     // 指定了绝对路径
-    if(program.cwd &&
-      path.isAbsolute(program.cwd)){
+    if(program.cwd && path.isAbsolute(program.cwd)){
       cwd = program.cwd;
     }
     // 开始运行命令
+    logger.log('开始构建项目, 模式：' + mode);
     var spinner = ora(logger.log(command));
     spinner.start();
     child_process.exec(command, {"cwd": cwd}, function(err){
@@ -88,12 +85,10 @@ function run () {
         logger.success('构建成功！');
       }
     });
-  }).catch(
-    e => {
-      console.log(e);
-      logger.error('构建失败:' + e);
-    }
-  )
+  }catch (e){
+    console.log(e);
+    logger.error('构建失败:' + e);
+  }
 }
 
 

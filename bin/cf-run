@@ -12,8 +12,9 @@ var child_process = require('child_process');
  * Usage.
  */
 program
-  .usage('')
-  .description(chalk.gray('运行单元测试'))
+  .usage('-m [dev]')
+  .option('-m, --mode [mode]', '开始运行项目')
+  .description(chalk.gray('运行项目，支持开发模式[dev], Mock测试模式[mock], 默认为Mock模式。'))
 
 /**
  * Help.
@@ -21,7 +22,10 @@ program
 program.on('--help', function () {
   console.log('  Examples:')
   console.log()
-  console.log('    $ cf test')
+  console.log('    $ cf run -m dev')
+  console.log('    $ cf run -m mock')
+  console.log('    $ cf run -mode dev')
+  console.log('    $ cf run -mode mock')
   console.log()
 })
 
@@ -45,20 +49,27 @@ run();
  * @description 开始执行
  */
 function run () {
-  // 开始
-  logger.log('开始启动单元测试');
-  var command = 'npm run test';
+  var command = '';
+  var mode = program.mode ? program.mode : program.args[0];
+  if(mode && mode.toUpperCase() == 'DEV'){
+    command = 'npm start';
+  }else if(mode && mode.toUpperCase() == 'MOCK'){
+    command = 'npm run mock';
+  }else{
+    command = 'npm run mock';
+  }
   var cwd = process.cwd();
   // 开始运行命令
+  logger.log('运行模式: ' + mode || 'mock');
   var spinner = ora(logger.log(command));
   spinner.start();
   child_process.exec(command, {"cwd": cwd}, function(err){
     spinner.stop();
     if(err){
       console.log(err);
-      logger.error('启动单元测试失败！');
+      logger.error('项目启动失败！');
     }else{
-      logger.success('启动单元测试成功！');
+      logger.success('项目启动成功！');
     }
   });
 }

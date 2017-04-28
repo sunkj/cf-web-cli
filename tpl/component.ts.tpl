@@ -6,7 +6,7 @@ import { ${name}Service } from './${importFileName}.service';
   	${name}Service
   ],
   templateUrl: './${importFileName}.component.html',
-  styleUrls: './${importFileName}.component.css'
+  styles: [ ]
 })
 
 export class ${name}Component implements OnInit  { 
